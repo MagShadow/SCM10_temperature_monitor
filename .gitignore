@@ -1,0 +1,15 @@
+# Local secrets / configs
+tests/email_test_config.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+scm10_log_*.csv
+
+# Build artifacts
+build/
+dist/
+*.spec

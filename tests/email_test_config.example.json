@@ -1,0 +1,13 @@
+{
+  "smtp_host": "smtp.gmail.com",
+  "smtp_port": 587,
+  "use_tls": true,
+  "username": "your_email@example.com",
+  "password": "app_password_here",
+  "from_addr": "your_email@example.com",
+  "to_addrs": [
+    "recipient1@example.com",
+    "recipient2@example.com"
+  ],
+  "subject": "SCM10 Email Test"
+}
