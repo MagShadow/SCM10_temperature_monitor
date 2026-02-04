@@ -32,6 +32,15 @@ from PySide6.QtWidgets import (
 
 import pyqtgraph as pg
 
+
+class CustomDateAxisItem(pg.DateAxisItem):
+    def tickStrings(self, values, scale, spacing):  # type: ignore[override]
+        strings = []
+        for value in values:
+            dt = datetime.fromtimestamp(value)
+            strings.append(f"{dt.year}. {dt.month}.{dt.day} {dt.hour:02d}:{dt.minute:02d}")
+        return strings
+
 from .alarm import AlarmManager, AlarmSettings
 from .comms import (
     EthernetConfig,
@@ -184,7 +193,7 @@ class MainWindow(QMainWindow):
         read_layout.addWidget(QLabel("Log Folder"), 1, 0)
         read_layout.addWidget(log_container, 1, 1, 1, 4)
 
-        self.plot_widget = pg.PlotWidget(axisItems={"bottom": pg.DateAxisItem()})
+        self.plot_widget = pg.PlotWidget(axisItems={"bottom": CustomDateAxisItem()})
         self.plot_widget.setBackground("w")
         self.plot_widget.showGrid(x=True, y=True, alpha=0.3)
         self.plot_widget.setLabel("bottom", "Time", color="k")
