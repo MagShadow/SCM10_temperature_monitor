@@ -36,6 +36,34 @@ Run the app:
 python -m scm10_monitor.main
 ```
 
+## Windows Shortcut (Hidden Console)
+
+Create a launcher script and a shortcut that runs it without showing a console window.
+
+1. Create a file named `run_scm10_monitor.cmd` in the project folder with:
+
+```bat
+@echo off
+setlocal
+call "<CONDA_BASE>\condabin\conda.bat" activate scm10_monitor
+cd /d "C:\Path\To\SCM10_T_monitor"
+python -m scm10_monitor.main
+endlocal
+```
+
+2. Create a file named `run_scm10_monitor.vbs` in the same folder with:
+
+```vbscript
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run """C:\Path\To\SCM10_T_monitor\run_scm10_monitor.cmd""", 0, False
+```
+
+3. Create a Windows shortcut to `run_scm10_monitor.vbs`.
+
+Notes:
+- Replace `<CONDA_BASE>` with your conda base path (from `conda info --base`).
+- Replace `C:\Path\To\SCM10_T_monitor` with your project folder.
+
 ## Usage Notes
 
 - **Connection settings** (including terminator and commands) are saved to:
@@ -65,6 +93,16 @@ python -m unittest tests.test_email_send -v
 ```
 
 > `tests/email_test_config.json` is in `.gitignore` so secrets are not committed.
+
+### Gmail App Passwords
+
+Gmail blocks normal account passwords for SMTP when 2‑step verification is enabled. You must use an **App Password**.
+
+Steps:
+1. Enable **2‑Step Verification** on the Gmail account.
+2. Go to **Google Account → Security → App passwords**.
+3. Create a new app password (e.g., “SCM10 Monitor”).
+4. Use that 16‑character app password in `tests/email_test_config.json` or the Email Settings dialog.
 
 ## Build a Standalone Windows `.exe`
 
