@@ -13,3 +13,6 @@ scm10_log_*.csv
 build/
 dist/
 *.spec
+
+# Vendor/installer media
+GUI_setup/
