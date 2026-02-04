@@ -188,8 +188,12 @@ class MainWindow(QMainWindow):
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground("w")
         self.plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self.plot_widget.setLabel("bottom", "Time", units="s")
-        self.plot_widget.setLabel("left", "Temperature", units="K")
+        self.plot_widget.setLabel("bottom", "Time", units="s", color="k")
+        self.plot_widget.setLabel("left", "Temperature", units="K", color="k")
+        self.plot_widget.getAxis("bottom").setTextPen(pg.mkPen(color="k"))
+        self.plot_widget.getAxis("bottom").setPen(pg.mkPen(color="k"))
+        self.plot_widget.getAxis("left").setTextPen(pg.mkPen(color="k"))
+        self.plot_widget.getAxis("left").setPen(pg.mkPen(color="k"))
         self.plot_curve = self.plot_widget.plot([], [], pen=pg.mkPen(color=(10, 60, 200), width=2))
         read_layout.addWidget(self.plot_widget, 2, 0, 1, 5)
 
@@ -622,7 +626,7 @@ class MainWindow(QMainWindow):
         self.current_temp.setText(f"{temperature:.3f} K")
 
         if self.logger:
-            self.logger.log(timestamp_iso, elapsed, temperature)
+            self.logger.log(timestamp_iso, temperature)
 
         alarm_temperature = self._average_recent_temperature(5)
         alarm_settings = AlarmSettings(
