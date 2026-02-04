@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
+    QDialog,
     QFileDialog,
     QFormLayout,
     QGridLayout,
@@ -81,6 +82,9 @@ class MainWindow(QMainWindow):
 
         # Connection group
         self.connection_group = QGroupBox("Connection")
+        self.connection_group.setStyleSheet(
+            "QGroupBox::title { font-weight: 700; font-size: 18px; }"
+        )
         conn_layout = QGridLayout()
 
         self.connection_type = QComboBox()
@@ -147,6 +151,9 @@ class MainWindow(QMainWindow):
 
         # Readout group
         self.readout_group = QGroupBox("Readout")
+        self.readout_group.setStyleSheet(
+            "QGroupBox::title { font-weight: 700; font-size: 18px; }"
+        )
         read_layout = QGridLayout()
 
         self.read_toggle = QPushButton("Start Reading")
@@ -191,6 +198,9 @@ class MainWindow(QMainWindow):
 
         # Alarm group
         self.alarm_group = QGroupBox("Alarm")
+        self.alarm_group.setStyleSheet(
+            "QGroupBox::title { font-weight: 700; font-size: 18px; }"
+        )
         alarm_layout = QGridLayout()
         self.alarm_enabled = QCheckBox("Enable Alarm")
         alarm_layout.addWidget(self.alarm_enabled, 0, 0, 1, 2)
@@ -215,44 +225,18 @@ class MainWindow(QMainWindow):
         self.beep_enabled = QCheckBox("Beep")
         self.email_enabled = QCheckBox("Email")
         alarm_layout.addWidget(self.beep_enabled, 3, 0)
-        alarm_layout.addWidget(self.email_enabled, 3, 1)
+        alarm_layout.addWidget(self.email_enabled, 4, 0)
 
-        self.email_min_interval = QSpinBox()
-        self.email_min_interval.setRange(1, 1440)
-        self.email_min_interval.setSuffix(" min")
-        alarm_layout.addWidget(QLabel("Email Min Interval"), 4, 0)
-        alarm_layout.addWidget(self.email_min_interval, 4, 1)
+        self.email_settings_button = QPushButton("Email Settings...")
+        self.email_settings_button.clicked.connect(self._open_email_settings)
+        alarm_layout.addWidget(self.email_settings_button, 4, 1)
 
-        # Email settings
-        email_box = QGroupBox("Email Settings")
-        email_form = QFormLayout()
-        self.smtp_host = QLineEdit()
-        self.smtp_port = QSpinBox()
-        self.smtp_port.setRange(1, 65535)
-        self.smtp_tls = QCheckBox("Use TLS")
-        self.smtp_user = QLineEdit()
-        self.smtp_pass = QLineEdit()
-        self.smtp_pass.setEchoMode(QLineEdit.Password)
-        self.remember_password = QCheckBox("Remember Password (encrypted)")
-        if not keyring:
-            self.remember_password.setEnabled(False)
-            self.remember_password.setToolTip("Keyring unavailable on this system")
-        self.email_from = QLineEdit()
-        self.email_to = QPlainTextEdit()
-        self.email_to.setPlaceholderText("user1@example.com; user2@example.com")
-        self.email_to.setFixedHeight(70)
-        self.email_subject = QLineEdit()
-        email_form.addRow("SMTP Host", self.smtp_host)
-        email_form.addRow("SMTP Port", self.smtp_port)
-        email_form.addRow("TLS", self.smtp_tls)
-        email_form.addRow("Username", self.smtp_user)
-        email_form.addRow("Password", self.smtp_pass)
-        email_form.addRow("", self.remember_password)
-        email_form.addRow("From", self.email_from)
-        email_form.addRow("To", self.email_to)
-        email_form.addRow("Subject", self.email_subject)
-        email_box.setLayout(email_form)
-        alarm_layout.addWidget(email_box, 5, 0, 1, 2)
+        self.email_status = QLabel("")
+        self.email_status.setStyleSheet(
+            "color: #000000; background-color: #fff3cd; padding: 6px; border-radius: 4px;"
+        )
+        self.email_status.setVisible(False)
+        alarm_layout.addWidget(self.email_status, 5, 0, 1, 2)
 
         self.alarm_group.setLayout(alarm_layout)
         left_layout.addWidget(self.alarm_group)
@@ -263,6 +247,8 @@ class MainWindow(QMainWindow):
         self.status_state = QLabel("Disconnected")
         self.statusBar().addPermanentWidget(self.status_state)
         self._set_connection_status(False, "Disconnected")
+
+        self._build_email_dialog()
 
     def _apply_settings_to_ui(self) -> None:
         conn_type = self.settings["connection"]["type"]
@@ -306,6 +292,62 @@ class MainWindow(QMainWindow):
 
         self._on_connection_type_changed()
         self._load_password_from_keyring()
+
+    def _build_email_dialog(self) -> None:
+        self.email_dialog = QDialog(self)
+        self.email_dialog.setWindowTitle("Email Settings")
+        self.email_dialog.setModal(True)
+
+        layout = QVBoxLayout(self.email_dialog)
+        form = QFormLayout()
+
+        self.smtp_host = QLineEdit()
+        self.smtp_port = QSpinBox()
+        self.smtp_port.setRange(1, 65535)
+        self.smtp_tls = QCheckBox("Use TLS")
+        self.smtp_user = QLineEdit()
+        self.smtp_pass = QLineEdit()
+        self.smtp_pass.setEchoMode(QLineEdit.Password)
+        self.remember_password = QCheckBox("Remember Password (encrypted)")
+        if not keyring:
+            self.remember_password.setEnabled(False)
+            self.remember_password.setToolTip("Keyring unavailable on this system")
+        self.email_from = QLineEdit()
+        self.email_to = QPlainTextEdit()
+        self.email_to.setPlaceholderText("user1@example.com; user2@example.com")
+        self.email_to.setFixedHeight(90)
+        self.email_subject = QLineEdit()
+        self.email_min_interval = QSpinBox()
+        self.email_min_interval.setRange(1, 1440)
+        self.email_min_interval.setSuffix(" min")
+
+        form.addRow("SMTP Host", self.smtp_host)
+        form.addRow("SMTP Port", self.smtp_port)
+        form.addRow("TLS", self.smtp_tls)
+        form.addRow("Username", self.smtp_user)
+        form.addRow("Password", self.smtp_pass)
+        form.addRow("", self.remember_password)
+        form.addRow("From", self.email_from)
+        form.addRow("To", self.email_to)
+        form.addRow("Subject", self.email_subject)
+        form.addRow("Email Min Interval", self.email_min_interval)
+
+        layout.addLayout(form)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch(1)
+        save_button = QPushButton("Save to Config")
+        save_button.clicked.connect(self._save_config)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.email_dialog.close)
+        button_row.addWidget(save_button)
+        button_row.addWidget(close_button)
+        layout.addLayout(button_row)
+
+    def _open_email_settings(self) -> None:
+        self.email_dialog.show()
+        self.email_dialog.raise_()
+        self.email_dialog.activateWindow()
 
     def _collect_settings_from_ui(self) -> None:
         conn_type = "ethernet" if self.connection_type.currentIndex() == 0 else "serial"
@@ -364,6 +406,8 @@ class MainWindow(QMainWindow):
         self._persist_password_to_keyring()
         save_settings(self.settings)
         self.statusBar().showMessage(f"Config saved to {self._config_path_display()}")
+        if hasattr(self, "email_dialog"):
+            self.email_dialog.close()
 
     def _load_password_from_keyring(self) -> None:
         if not keyring or not self.remember_password.isChecked():
@@ -409,6 +453,37 @@ class MainWindow(QMainWindow):
         if hasattr(self, "status_state"):
             self.status_state.setText(text)
             self.status_state.setStyleSheet(f"color: {color}; font-weight: 600; font-size: 16px;")
+
+    def _average_recent_temperature(self, window: int = 5) -> float:
+        if not self.temp_data:
+            return 0.0
+        sample = self.temp_data[-window:]
+        return sum(sample) / len(sample)
+
+    def _update_email_status(self) -> None:
+        if not self.email_enabled.isChecked():
+            self.email_status.setVisible(False)
+            self.email_status.setText("")
+            return
+        error = self.alarm_manager.last_email_error
+        sent = self.alarm_manager.last_email_sent_ts
+        if error:
+            self.email_status.setText(f"Email error: {error}")
+            self.email_status.setStyleSheet(
+                "color: #b42318; background-color: #f8d7da; padding: 6px; border-radius: 4px;"
+            )
+            self.email_status.setVisible(True)
+            return
+        if sent:
+            ts = datetime.fromtimestamp(sent).strftime("%Y-%m-%d %H:%M:%S")
+            self.email_status.setText(f"Last email sent on {ts}")
+            self.email_status.setStyleSheet(
+                "color: #1a7f37; background-color: #d1e7dd; padding: 6px; border-radius: 4px;"
+            )
+            self.email_status.setVisible(True)
+            return
+        self.email_status.setVisible(False)
+        self.email_status.setText("")
 
     def _browse_log_folder(self) -> None:
         folder = QFileDialog.getExistingDirectory(self, "Select Log Folder")
@@ -482,6 +557,9 @@ class MainWindow(QMainWindow):
         self.start_time = time.monotonic()
         self.time_data = []
         self.temp_data = []
+        self.alarm_manager.reset()
+        self.email_status.setVisible(False)
+        self.email_status.setText("")
         self.plot_curve.setData(self.time_data, self.temp_data)
         self.reading_active = True
         self.read_toggle.setText("Stop Reading")
@@ -513,6 +591,8 @@ class MainWindow(QMainWindow):
             self.logger.close()
             self.logger = None
         self.alarm_manager.reset()
+        self.email_status.setVisible(False)
+        self.email_status.setText("")
         self.statusBar().showMessage("Reading stopped")
 
     def _poll_temperature(self) -> None:
@@ -544,6 +624,7 @@ class MainWindow(QMainWindow):
         if self.logger:
             self.logger.log(timestamp_iso, elapsed, temperature)
 
+        alarm_temperature = self._average_recent_temperature(5)
         alarm_settings = AlarmSettings(
             enabled=self.alarm_enabled.isChecked(),
             low_enabled=self.low_enabled.isChecked(),
@@ -564,7 +645,8 @@ class MainWindow(QMainWindow):
             to_addrs=self._parse_recipients(self.email_to.toPlainText()),
             subject=self.email_subject.text().strip() or "SCM10 Alarm",
         )
-        self.alarm_manager.evaluate(temperature, alarm_settings, email_config)
+        self.alarm_manager.evaluate(alarm_temperature, alarm_settings, email_config)
+        self._update_email_status()
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - Qt naming
         self._collect_settings_from_ui()

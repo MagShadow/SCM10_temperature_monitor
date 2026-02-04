@@ -1,110 +1,75 @@
-# SCM10 Temperature Monitor (Python)
+# SCM10 Temperature Monitor
 
-This project provides a Windows GUI application for the Scientific Instruments SCM10 Temperature Monitor.
-It uses Python internally and can be compiled into a standalone Windows `.exe`.
+A Windows GUI application for the Scientific Instruments SCM10 Temperature Monitor.
+It provides connection control (Ethernet/RS232), real-time temperature display and logging, and alarm notifications.
 
-## Features (mapped to your requirements)
+## Features
 
-1. **Python-based, standalone Windows `.exe`**
-   - Uses Python + PySide6 + pyqtgraph + pyserial.
-   - Build instructions below for a self-contained executable.
+- Ethernet or RS232 (USB) connection with connection test
+- Real-time temperature readout and plot
+- CSV logging (new file per run)
+- Alarm thresholds with continuous beeping and email notifications
+- Email settings dialog with optional encrypted password storage (OS keyring)
+- Alarm evaluation uses the **average of the most recent 5 points**
 
-2. **Connection area (Ethernet / RS232 USB) + test**
-   - Select connection type (Ethernet or RS232/USB).
-   - Enter IP/port or COM/baud.
-   - Test connection using `*IDN?` (configurable).
-
-3. **Real-time reading + plot + logging**
-   - Toggle reading **ON/OFF**.
-   - Set reading period (default 1 second).
-   - Plot temperature vs. time from the moment reading starts.
-   - Choose log folder and automatically create a new log file for every start.
-
-4. **Alarm with thresholds + beep/email**
-   - Enable/disable alarm.
-   - Configure high/low thresholds.
-   - Beep and/or email on alarm.
-   - Email includes a minimum reminder period (default 60 minutes).
-
-## Folder structure
+## Project Structure
 
 ```
 SCM10_T_monitor/
   environment.yml
   scm10_monitor/
-    __init__.py
-    alarm.py
-    comms.py
-    emailer.py
-    logger.py
-    main.py
-    main_window.py
-    protocol.py
-    settings.py
+  tests/
   requirements.txt
   README.md
 ```
 
-## Quick start (run from source, Conda)
-
-1. Create and activate a conda environment:
+## Setup (Conda)
 
 ```bash
 conda env create -f environment.yml
 conda activate scm10_monitor
 ```
 
-2. Run the app:
+Run the app:
 
 ```bash
 python -m scm10_monitor.main
 ```
 
-## Connection and protocol settings
+## Usage Notes
 
-The SCM10 command summary in the manual shows query commands like:
+- **Connection settings** (including terminator and commands) are saved to:
+  `%APPDATA%\SCM10_T_monitor\settings.json`
+- **Logging** creates a new CSV each time reading starts:
+  `scm10_log_YYYYMMDD_HHMMSS.csv`
+- **Alarm averaging** uses the latest 5 points to decide threshold crossings
+- **Email settings** are configured via the “Email Settings...” dialog
+  - If “Remember Password” is enabled and keyring is available, the password is stored encrypted
 
-- `*IDN?` (identification)
-- `T?` (temperature)
+## Email Test (optional)
 
-Default command strings are set in the UI and stored in your settings file:
+A simple integration-style test is provided to verify SMTP settings.
 
-```
-%APPDATA%\SCM10_T_monitor\settings.json
-```
-
-If your instrument expects a different terminator or command format, you can adjust these fields in the UI:
-
-- **Terminator** (default `\r\n`)
-- **IDN Query** (default `*IDN?`)
-- **Temp Query** (default `T?`)
-
-> If communication fails, try changing the terminator to `\n` or `\r`.
-
-## Logging
-
-Each time reading starts, a new CSV log file is created:
+1. Copy and edit the test config:
 
 ```
-scm10_log_YYYYMMDD_HHMMSS.csv
+cp tests/email_test_config.example.json tests/email_test_config.json
 ```
 
-Columns:
+2. Fill in SMTP credentials and recipients.
 
+3. Run the test:
+
+```bash
+python -m unittest tests.test_email_send -v
 ```
-timestamp_iso,elapsed_s,temperature_k
-```
 
-## Alarm behavior
+> `tests/email_test_config.json` is in `.gitignore` so secrets are not committed.
 
-- If the temperature crosses the configured thresholds, the alarm triggers.
-- **Beep** is issued when entering alarm state.
-- **Email** is sent on alarm and then at the configured minimum reminder interval.
+## Build a Standalone Windows `.exe`
 
-## Build a standalone Windows `.exe` (Conda)
-
-If you created the environment with `environment.yml`, `pyinstaller` is already included.
-Otherwise, install it in the same conda environment:
+If you created the environment with `environment.yml`, `pyinstaller` is included.
+Otherwise install it with conda:
 
 ```bash
 conda install -c conda-forge pyinstaller
@@ -122,21 +87,9 @@ Output:
 dist/SCM10_Monitor/SCM10_Monitor.exe
 ```
 
-You can copy the entire `dist/SCM10_Monitor` folder to any Windows PC to run the program.
+Copy the entire `dist/SCM10_Monitor` folder to another Windows PC to run the app.
 
-## Notes
+## Troubleshooting
 
-- **Ethernet port**: The SCM10 manual lists a "TCP Data Socket" value. If you are unsure of the port,
-  check the instrument configuration or manual and set the correct port in the UI.
-- **Serial port**: Make sure the correct COM port and baud rate are selected.
-- **Email**: Most providers require app passwords or SMTP-specific credentials.
-
-## Customization
-
-All settings are persisted to:
-
-```
-%APPDATA%\SCM10_T_monitor\settings.json
-```
-
-You can edit this file directly if you want to change defaults or provide new command strings.
+- If SMTP login fails for Gmail, use an **App Password** (requires 2‑step verification).
+- If connection fails, confirm the instrument’s TCP port or serial settings.

@@ -29,10 +29,14 @@ class AlarmManager:
     def __init__(self) -> None:
         self._last_email_ts: Optional[float] = None
         self._in_alarm = False
+        self.last_email_error: Optional[str] = None
+        self.last_email_sent_ts: Optional[float] = None
 
     def reset(self) -> None:
         self._last_email_ts = None
         self._in_alarm = False
+        self.last_email_error = None
+        self.last_email_sent_ts = None
 
     def evaluate(
         self,
@@ -76,8 +80,17 @@ class AlarmManager:
     ) -> None:
         def _send():
             sender = EmailSender(email_config)
-            status = "LOW" if is_low else "HIGH"
-            body = f"SCM10 alarm triggered: {status}\nTemperature: {temperature:.6f} K"
-            sender.send(body)
+            compare = "LOWER" if is_low else "HIGHER"
+            body = (
+                "This is an automated warning that the cold head temperature of the 2K fridge "
+                f"is {temperature:.6f} K, which is {compare} than the preset threshold. "
+                "Please check if anything is wrong ASAP."
+            )
+            try:
+                sender.send(body)
+                self.last_email_error = None
+                self.last_email_sent_ts = time.time()
+            except Exception as exc:
+                self.last_email_error = str(exc)
 
         threading.Thread(target=_send, daemon=True).start()
