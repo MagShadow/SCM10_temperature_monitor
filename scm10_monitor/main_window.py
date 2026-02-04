@@ -62,7 +62,6 @@ class MainWindow(QMainWindow):
         self.read_timer = QTimer(self)
         self.read_timer.timeout.connect(self._poll_temperature)
         self.reading_active = False
-        self.start_time = None
         self.time_data = []
         self.temp_data = []
         self.alarm_manager = AlarmManager()
@@ -185,10 +184,10 @@ class MainWindow(QMainWindow):
         read_layout.addWidget(QLabel("Log Folder"), 1, 0)
         read_layout.addWidget(log_container, 1, 1, 1, 4)
 
-        self.plot_widget = pg.PlotWidget()
+        self.plot_widget = pg.PlotWidget(axisItems={"bottom": pg.DateAxisItem()})
         self.plot_widget.setBackground("w")
         self.plot_widget.showGrid(x=True, y=True, alpha=0.3)
-        self.plot_widget.setLabel("bottom", "Time", units="s", color="k")
+        self.plot_widget.setLabel("bottom", "Time", color="k")
         self.plot_widget.setLabel("left", "Temperature", units="K", color="k")
         self.plot_widget.getAxis("bottom").setTextPen(pg.mkPen(color="k"))
         self.plot_widget.getAxis("bottom").setPen(pg.mkPen(color="k"))
@@ -558,7 +557,6 @@ class MainWindow(QMainWindow):
         self.logger = DataLogger(Path(log_folder_text))
         log_path = self.logger.start()
 
-        self.start_time = time.monotonic()
         self.time_data = []
         self.temp_data = []
         self.alarm_manager.reset()
@@ -611,10 +609,10 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Read failed: {exc}")
             return
 
-        elapsed = time.monotonic() - self.start_time if self.start_time else 0.0
-        timestamp_iso = datetime.now().isoformat(timespec="seconds")
+        epoch_ts = time.time()
+        timestamp_iso = datetime.fromtimestamp(epoch_ts).isoformat(timespec="seconds")
 
-        self.time_data.append(elapsed)
+        self.time_data.append(epoch_ts)
         self.temp_data.append(temperature)
 
         max_points = int(self.settings["readout"].get("max_points", 3600))
