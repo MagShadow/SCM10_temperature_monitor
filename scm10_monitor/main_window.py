@@ -625,7 +625,7 @@ class MainWindow(QMainWindow):
         self.temp_data.append(temperature)
 
         max_points = int(self.settings["readout"].get("max_points", 3600))
-        if len(self.time_data) > max_points:
+        if max_points > 0 and len(self.time_data) > max_points:
             self.time_data = self.time_data[-max_points:]
             self.temp_data = self.temp_data[-max_points:]
 
