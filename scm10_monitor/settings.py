@@ -25,7 +25,7 @@ DEFAULT_SETTINGS = {
     "readout": {
         "period_s": 1.0,
         "log_folder": "",
-        "max_points": 3600,
+        "max_points": 0,
     },
     "alarm": {
         "enabled": False,
