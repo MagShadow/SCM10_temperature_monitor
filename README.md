@@ -36,6 +36,12 @@ Run the app:
 python -m scm10_monitor.main
 ```
 
+Run the history viewer app:
+
+```bash
+python -m scm10_monitor.main_history
+```
+
 ## Windows Shortcut (Hidden Console)
 
 Create a launcher script and a shortcut that runs it without showing a console window.
