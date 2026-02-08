@@ -49,6 +49,9 @@ DEFAULT_SETTINGS = {
         "remember_password": False,
         "keyring_service": "SCM10_T_monitor",
     },
+    "history": {
+        "log_folder": "",
+    },
 }
 
 
