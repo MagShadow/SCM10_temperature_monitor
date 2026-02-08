@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sys
 import time
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -253,6 +254,9 @@ class MainWindow(QMainWindow):
         self.alarm_group.setLayout(alarm_layout)
         left_layout.addWidget(self.alarm_group)
         left_layout.addStretch(1)
+        self.history_button = QPushButton("Open History Viewer")
+        self.history_button.clicked.connect(self._open_history_viewer)
+        left_layout.addWidget(self.history_button)
 
         self.setCentralWidget(central)
         self.statusBar().showMessage("Ready")
@@ -360,6 +364,16 @@ class MainWindow(QMainWindow):
         self.email_dialog.show()
         self.email_dialog.raise_()
         self.email_dialog.activateWindow()
+
+    def _open_history_viewer(self) -> None:
+        try:
+            subprocess.Popen([sys.executable, "-m", "scm10_monitor.main_history"])
+        except OSError as exc:
+            QMessageBox.warning(
+                self,
+                "Launch Failed",
+                f"Could not start the history viewer:\n{exc}",
+            )
 
     def _collect_settings_from_ui(self) -> None:
         conn_type = "ethernet" if self.connection_type.currentIndex() == 0 else "serial"
